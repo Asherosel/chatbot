@@ -1,66 +1,65 @@
+//dispatch: Redux store'a action göndermek için kullanılır.
+//setMessages, setLoading: Redux slice'tan import edilen action'lardır.
+//handleExampleClick: Örnek butona tıklanınca mesajı Redux state'ine ekler.
+//handleSendMessage: Kullanıcı mesajını ve ardından asistan cevabını Redux state'ine ekler.
+//handleMessageUpdate: Mesajları günceller (örneğin bir mesaj silindiğinde veya değiştirildiğinde).
 import { sendAIMessage } from '../api/api';
 import { createUserMessage, createTextResponse } from './Messages';
 import { createComponentByType, getComponentTypeFromContent } from './ComponentMapper';
+import { setMessages, setLoading } from '../store/ChatSlice';
 
 //this = MessageHandler nesnesinin kendisi ve constructor'da atanan React state fonksiyonlarına erişim sağlar.
-//await kod gerçekleşene kadar bekler.
+//await kod gerçekleşene kadarbekler.
 
 //MessageHandler sınıfı, tüm mesaj işleme mantığını bir araya getiren bir yöneticidir (controller). Özellikle mesaj gönderme, örnek mesaj tıklama, AI'den yanıt alma gibi işlevleri tek bir merkezden kontrol etmek için kullanılır.
 export class MessageHandler {
-    constructor(setMessages, setLoading, handleMessageUpdate) {
-        this.setMessages = setMessages;  // Chat'teki mesajları güncelleyen React state fonksiyonu
-        this.setLoading = setLoading;    // Loading durumunu kontrol eden fonksiyon
-        this.handleMessageUpdate = handleMessageUpdate;  // Mesaj güncellendiğinde çalışan callback
+  constructor(dispatch, handleMessageUpdate) {
+    this.dispatch = dispatch;
+    this.handleMessageUpdate = handleMessageUpdate;
+  }
+    async handleExampleClick(content, setShowButtons, messages) {
+    setShowButtons(false);
+    const userMessage = createUserMessage(content);
+    this.dispatch(setMessages([...messages, userMessage]));
+    await this.processMessage(content, messages, userMessage);
+  }
+
+  async handleSendMessage(input, setInput, messages) {
+    if (!input.trim()) return;
+    const userMessage = createUserMessage(input);
+    this.dispatch(setMessages([...messages, userMessage]));
+    setInput('');
+    this.dispatch(setLoading(true));
+    await this.processMessage(input, messages, userMessage);
+  }
+
+  async processMessage(content, messages = [], userMessage = null) {
+    const componentType = getComponentTypeFromContent(content);
+
+    if (componentType) {
+      const result = createComponentByType(componentType, {
+        dispatch: this.dispatch,
+        onResult: this.handleMessageUpdate,
+      });
+      if (result) {
+        this.dispatch(setMessages([...messages, result.component]));
+        this.dispatch(setLoading(true)); // mesaj gönderme işlemi başlarken
+        return;
+      }
     }
 
-    async handleExampleClick(content, setShowButtons) {
-        setShowButtons(false); //butonların gizlenmesi
-        const userMessage = createUserMessage(content); //yeni kullanıcı mesajı
-        this.setMessages(prev => [...prev, userMessage]); // Mesajı chat'e ekle
-
-        await this.processMessage(content); //mesajı işle
+    //AI cevabı
+    if (userMessage) {
+      try {
+        const aiReply = await sendAIMessage([...messages, userMessage]);
+        const assistantMessage = createTextResponse(aiReply);
+        this.dispatch(setMessages([...messages, assistantMessage]));
+      } catch (error) {
+        console.error('AI mesajı gönderilirken hata:', error);
+        const errorMessage = createTextResponse("Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.");
+        this.dispatch(setMessages([...messages, errorMessage]));
+      }
     }
-
-    async handleSendMessage(input, setInput, messages) {
-        if (!input.trim()) return; //boş mesaj kontrolü
-
-        const userMessage = createUserMessage(input); //kullanıcı mesajı oluştur
-        this.setMessages(prev => [...prev, userMessage]); //chat'e ekle
-        setInput(''); //inputu temizle 
-        this.setLoading(true); //loading'i başlat 
-
-        await this.processMessage(input, messages, userMessage); //mesajı işle
-    }
-
-    async processMessage(content, messages = [], userMessage = null) { //mesaj içeriğine göre uygun component tipini belirler ve mesajı düzenler
-        const componentType = getComponentTypeFromContent(content); //component var mı kontrol et
-
-        if (componentType) { //kart componenti oluşturur
-            const result = createComponentByType(componentType, {
-                setMessages: this.setMessages,
-                onResult: this.handleMessageUpdate
-            }); // component türüne göre oluşturur.
-
-            if (result) { //eğer sonuç varsa eski mesajla yeni mesajı değiştirir ve loading'i kapatır
-                this.setMessages(prev => [...prev, result.component]);
-                this.setLoading(false);
-                return; //işlem tamamlandı, çık
-            }
-        }
-
-        // AI mesajı gönder
-        if (userMessage) {
-            try {
-                const aiReply = await sendAIMessage([...messages, userMessage]); //AI'den cevap alır 
-                const assistantMessage = createTextResponse(aiReply); //AI mesajını oluşturur
-                this.setMessages(prev => [...prev, assistantMessage]); //chat'e yazdırır
-            } catch (error) { //hata durumundaki mesajlar
-                console.error('AI mesajı gönderilirken hata:', error);
-                const errorMessage = createTextResponse("Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.");
-                this.setMessages(prev => [...prev, errorMessage]);
-            }
-        }
-
-        this.setLoading(false);
-    }
+    this.dispatch(setLoading(false));
+  }
 }

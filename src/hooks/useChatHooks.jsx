@@ -1,3 +1,4 @@
+/*
 import { useState, useRef } from 'react';
 //useRef -> bir input, textarea veya herhangi bir HTML öğesine doğrudan erişmek için kullanılır. Sayfa yenilendiğinde direkt input'a odaklanmayı sağlar. Değer saklayabilir fakat useState gibi değer değişince tekrar render olmaz. Bir önceki props veya state değerini saklamak için de kullanılır.
 
@@ -49,3 +50,4 @@ export const useMessageUpdate = (setMessages) => { //mesaj güncelleme fonksiyon
 
     return handleMessageUpdate;
 };
+*/
