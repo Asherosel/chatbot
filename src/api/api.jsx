@@ -4,7 +4,7 @@ import axios from 'axios';
 // IMPORTANT: Replace with your actual Gemini API Key.
 // For production applications, consider securing this key
 // by storing it in environment variables and accessing it server-side.
-const GEMINI_API_KEY = "AIzaSyBmk5csfwLiursqI_CevGuaVfFSF_G6PRA"; // Replace with your actual API key
+const GEMINI_API_KEY = ""; // Replace with your actual API key
 // 'gemini-pro' yerine ListModels'tan aldığınız geçerli bir model adını kullanın
 const MODEL_NAME = "gemini-1.5-flash"; // Veya 'gemini-1.5-flash', vb.
 
