@@ -8,12 +8,14 @@ import { createComponentByType, getComponentTypeFromContent } from './ComponentM
 // MessageHandler.js
 
 export class MessageHandler {
-    constructor(setMessages, setLoading, handleMessageUpdate, generateContent) {
+    constructor(setMessages, setLoading, handleMessageUpdate, generateContent, sendMessage) {
         this.setMessages = setMessages;
         this.setLoading = setLoading;
         this.handleMessageUpdate = handleMessageUpdate;
         this.generateContent = generateContent; // RTK mutation fonksiyonu
+        this.sendMessage = sendMessage;
     }
+
 
     async handleExampleClick(content, setShowButtons) {
         setShowButtons(false);
@@ -21,6 +23,8 @@ export class MessageHandler {
         this.setMessages(prev => [...prev, userMessage]);
 
         await this.processMessage(content); // aynı
+        const response = await this.sendMessage([{ role: "assistant", content: content }]).unwrap();
+        console.log("✅ API cevabı:", response);
     }
 
     async handleSendMessage(input, setInput, messages) {

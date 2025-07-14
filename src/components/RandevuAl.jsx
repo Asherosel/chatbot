@@ -1,81 +1,72 @@
-import React from 'react'
-import { useState } from "react";
-import { createTextResponse, createComponentResponse } from '../utils/Messages';
-import RandevuSonuc from './RandevuSonuc';
-import { useSendMessageMutation } from '../api/api';
+import React, { useState } from "react";
+import { createComponentResponse } from "../utils/Messages";
+import RandevuSonuc from "./RandevuSonuc";
+import { useSendMessageMutation } from "../api/api";
 
 function RandevuAl({ onResult, onRemoveFormMessage, setMessages, id }) {
-    // Geçici veriler (dummy data)
-    const hospitals = ["Devlet Hastanesi", "Şehir Hastanesi", "Özel Hastane"];
+    const hospitals = ["Devlet Hastanesi", "Şehir Hastanesi", "Özel Hastane", "Ankara Şehir Hastanesi"];
     const doctors = ["Dr. Ali Yılmaz", "Dr. Ayşe Demir", "Dr. Mehmet Kaya"];
     const departments = ["Kardiyoloji", "Dahiliye", "Ortopedi"];
 
-    // Seçilen değerleri tutmak için state
     const [selectedHospital, setSelectedHospital] = useState("");
     const [selectedDoctor, setSelectedDoctor] = useState("");
     const [selectedDepartment, setSelectedDepartment] = useState("");
     const [selectedDate, setSelectedDate] = useState("");
 
-    const today = new Date();
-    const formatDate = (date) => date.toISOString().split("T")[0]; //Bu kısım Date nesnesini ISO 8601 formatına çevirir. split("T")[0] sadece "2025-07-11" kısmını alır.
-
-    const [sendMessage] = useSendMessageMutation();
     const [currentStep, setCurrentStep] = useState(1);
+    const [sendMessage] = useSendMessageMutation();
 
-    const handleConfirm = async () => {
-        if (!selectedDate) {
-            alert("Lütfen tarih seçiniz.");
-            return;
+    const today = new Date();
+    const formatDate = (date) => date.toISOString().split("T")[0];
+
+    
+    const handleConfirm = () => {
+
+        // Önce form mesajını kaldır
+        if (onRemoveFormMessage && setMessages && id) {
+            onRemoveFormMessage(setMessages, id);
         }
 
-        try {
-            alert("Randevu başarıyla oluşturuldu.");
+        // Sonra randevu sonuç mesajını ekle
+        const sonucComponent = (
+            <RandevuSonuc
+                id={Date.now()}
+                hospital={selectedHospital}
+                doctor={selectedDoctor}
+                department={selectedDepartment}
+                date={selectedDate}
+                onRemoveMessage={(id) => onResult({ type: "remove", id })}
+            />
+        );
 
-            // Sonuç mesajını göster
-            const sonucComponent = (
-                <RandevuSonuc
-                    id={Date.now()}
-                    hospital={selectedHospital}
-                    doctor={selectedDoctor}
-                    department={selectedDepartment}
-                    date={selectedDate}
-                    onRemoveMessage={(id) => onResult({ type: "remove", id })}
-                />
-            );
+        onResult(createComponentResponse(sonucComponent, Date.now()));
 
-            onResult(createComponentResponse(sonucComponent, Date.now()));
-
-            // Formu sıfırla ve/veya adımı resetle
-            setSelectedHospital("");
-            setSelectedDoctor("");
-            setSelectedDepartment("");
-            setSelectedDate("");
-            setCurrentStep(1); // ya da uygun adım
-
-        } catch (error) {
-            console.log("Randevu oluşturulurken hata oluştu.");
-            console.error(error);
-        }
+        setSelectedHospital("");
+        setSelectedDoctor("");
+        setSelectedDepartment("");
+        setSelectedDate("");
+        setCurrentStep(1);
     };
 
     return (
         <div className="max-w-md mx-auto p-6 bg-white rounded-xl space-y-4">
             <h2 className="text-2xl font-semibold text-center text-gray-800">Randevu Oluştur</h2>
 
-            {/* Hastane */}
             {currentStep === 1 && (
                 <div>
-                    <label>Hastane</label>
-                    <select value={selectedHospital} onChange={(e) => setSelectedHospital(e.target.value)}>
+                    <label className="block mb-1">Hastane</label>
+                    <select className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value={selectedHospital} onChange={(e) => setSelectedHospital(e.target.value)}>
                         <option value="">Seçiniz</option>
                         {hospitals.map((item, i) => (
                             <option key={i} value={item}>{item}</option>
                         ))}
                     </select>
                     <button
+                        className="w-full mt-5 bg-[#303030] hover:bg-[#414141] text-white py-2 px-4 rounded-2xl cursor-pointer"
                         onClick={async () => {
-                            if (!selectedHospital) return alert("Lütfen hastane seçiniz.");
-                            useSendMessageMutation("hastane", selectedHospital);
+                            if (!selectedHospital) return;
+                            const response = await sendMessage([{ role: "assistant", content: `Hastane: ${selectedHospital}` }]).unwrap();
+                            console.log("✅ API cevabı:", response);
                             setCurrentStep(2);
                         }}
                     >
@@ -84,20 +75,22 @@ function RandevuAl({ onResult, onRemoveFormMessage, setMessages, id }) {
                 </div>
             )}
 
-            {/* Doktor */}
+
             {currentStep === 2 && (
                 <div>
-                    <label>Doktor</label>
-                    <select value={selectedDoctor} onChange={(e) => setSelectedDoctor(e.target.value)}>
+                    <label className="block mb-1">Bölüm</label>
+                    <select className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)}>
                         <option value="">Seçiniz</option>
-                        {doctors.map((item, i) => (
+                        {departments.map((item, i) => (
                             <option key={i} value={item}>{item}</option>
                         ))}
                     </select>
                     <button
+                        className="w-full mt-5 bg-[#303030] hover:bg-[#414141] text-white py-2 px-4 rounded-2xl cursor-pointer"
                         onClick={async () => {
-                            if (!selectedDoctor) return alert("Lütfen doktor seçiniz.");
-                            await useSendMessageMutation("doktor", selectedDoctor);
+                            if (!selectedDepartment) return;
+                             const response = await sendMessage([{ role: "assistant", content: `Bölüm: ${selectedDepartment}` }]).unwrap();
+                            console.log("✅ API cevabı:", response);
                             setCurrentStep(3);
                         }}
                     >
@@ -106,20 +99,21 @@ function RandevuAl({ onResult, onRemoveFormMessage, setMessages, id }) {
                 </div>
             )}
 
-            {/* Bölüm */}
             {currentStep === 3 && (
                 <div>
-                    <label>Bölüm</label>
-                    <select value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)}>
+                    <label className="block mb-1">Doktor</label>
+                    <select className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value={selectedDoctor} onChange={(e) => setSelectedDoctor(e.target.value)}>
                         <option value="">Seçiniz</option>
-                        {departments.map((item, i) => (
+                        {doctors.map((item, i) => (
                             <option key={i} value={item}>{item}</option>
                         ))}
                     </select>
                     <button
+                        className="w-full mt-5 bg-[#303030] hover:bg-[#414141] text-white py-2 px-4 rounded-2xl cursor-pointer"
                         onClick={async () => {
-                            if (!selectedDepartment) return alert("Lütfen bölüm seçiniz.");
-                            await useSendMessageMutation("bölüm", selectedDepartment);
+                            if (!selectedDoctor) return;
+                            const response = await sendMessage([{ role: "assistant", content: `Doktor: ${selectedDoctor}` }]).unwrap();
+                            console.log("✅ API cevabı:", response);
                             setCurrentStep(4);
                         }}
                     >
@@ -128,38 +122,32 @@ function RandevuAl({ onResult, onRemoveFormMessage, setMessages, id }) {
                 </div>
             )}
 
-            {/* Tarih */}
+
             {currentStep === 4 && (
                 <div>
-                    <label>Tarih</label>
-                    <select value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}>
-                        <option value="">Seçiniz</option>
-                        {date.map((item, i) => (
-                            <option key={i} value={item}>{item}</option>
-                        ))}
-                    </select>
+                    <label className="block mb-1">Tarih</label>
+                    <input
+                        type="date"
+                        value={selectedDate}
+                        min={formatDate(today)}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="w-full border border-gray-300 rounded px-3 py-2"
+                    />
                     <button
+                        className="w-full mt-5 bg-[#303030] hover:bg-[#414141] text-white py-2 px-4 rounded-2xl cursor-pointer"
                         onClick={async () => {
-                            if (!selectedDate) return alert("Lütfen tarih seçiniz.");
-                            await useSendMessageMutation("tarih", selectedDate);
-                            setCurrentStep(4);
+                            if (!selectedDate) return;
+                             const response = await sendMessage([{ role: "assistant", content: `Tarih: ${selectedDate}` }]).unwrap();
+                            console.log("✅ API cevabı:", response);
+                            handleConfirm();
                         }}
                     >
                         Devam Et
                     </button>
                 </div>
-            )}
-
-            {currentStep === 5 && (
-                <button
-                    onClick={handleConfirm}
-                    className="w-full bg-[#303030] hover:bg-[#414141] text-white py-2 px-4 rounded-2xl cursor-pointer"
-                >
-                    Randevu Al
-                </button>
             )}
         </div>
     );
-};
+}
 
-export default RandevuAl
+export default RandevuAl;

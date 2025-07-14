@@ -1,4 +1,5 @@
 import React from 'react';
+import { useEffect } from "react";
 import { useChatState, useTextareaAutoGrow, useMessageUpdate } from '../hooks/useChatHooks';
 import { MessageHandler } from '../utils/MessageHandler';
 import { removeRandevuSonucMessage, updateRandevuSonucMessage, confirmRandevuSonucMessage } from '../utils/ButtonFunctions';
@@ -17,11 +18,29 @@ const AIAsistan = () => {
         inputRef
     } = useChatState();
 
+
+
     const [generateContent] = useSendMessageMutation();
+    const [sendMessageMutation] = useSendMessageMutation();
+
+    useEffect(() => {
+        const resetSession = async () => {
+            try {
+                sendMessageMutation([
+                    { role: "user", content: "iptal" } // veya "cancel"
+                ]);
+                console.log("⛔ Oturum sıfırlandı (iptal mesajı gönderildi).");
+            } catch (e) {
+                console.error("❌ Oturum sıfırlanırken hata:", e);
+            }
+        };
+
+        resetSession(); // Sayfa yüklendiğinde çalışır
+    }, []);
 
     const handleInputChange = useTextareaAutoGrow(inputRef, setInput); //yazı bölümünün otomatik büyümesini ayarlayan fonksiyon çağırılır
     const handleMessageUpdate = useMessageUpdate(setMessages); //mesaj güncelleme fonksiyonu
-    const messageHandler = new MessageHandler(setMessages, setLoading, handleMessageUpdate, generateContent); //MessageHandler çağırılır
+    const messageHandler = new MessageHandler(setMessages, setLoading, handleMessageUpdate, generateContent, sendMessageMutation); //MessageHandler çağırılır
     const handleExampleClick = (content) => {
         messageHandler.handleExampleClick(content, setShowButtons);
     }; //ilk butona göre mesaj yazdırma fonksiyonu

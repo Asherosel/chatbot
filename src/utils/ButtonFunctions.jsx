@@ -7,7 +7,6 @@ import { localApi } from '../api/api';
 
 export const sendActionToAPI = async (actionText) => {
     try {
-        console.log("🟡 API'ye gönderiliyor:", actionText); // GÖNDERİLİYOR MU?
         const result = await store.dispatch(
             localApi.endpoints.sendMessage.initiate([
                 { role: "user", content: actionText }
@@ -37,7 +36,7 @@ export const removeRandevuFormMessage = (setMessages, id) => {
     );
 };
 
-export const removeRandevuSonucMessage = (setMessages, id) => {
+export const removeRandevuSonucMessage = async (setMessages, id) => {
     setMessages(prev =>
         prev.map(msg => {
             if (msg.id === id) {
@@ -50,6 +49,7 @@ export const removeRandevuSonucMessage = (setMessages, id) => {
             return msg;
         })
     );
+    await sendActionToAPI("Hayır");
 };
 
 export const updateRandevuSonucMessage = (setMessages, id) => {
@@ -98,5 +98,5 @@ export const confirmRandevuSonucMessage = async (setMessages, id) => {
         })
     );
 
-    await sendActionToAPI("Randevu Onayla");
+    await sendActionToAPI("Evet");
 };
