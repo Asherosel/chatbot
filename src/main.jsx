@@ -4,6 +4,9 @@ import './index.css'
 import App from './App.jsx'
 import { Provider } from 'react-redux';
 
+import { store } from '../src/hooks/store.js'; // RTK Query'nin entegre edildiği store
+
+
 // Uygulama Redux Provider ile sarılır, tüm alt bileşenler store'a erişebilir.
 createRoot(document.getElementById('root')).render(
   <StrictMode>

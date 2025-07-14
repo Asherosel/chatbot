@@ -15,6 +15,9 @@ import {
 } from '../utils/ButtonFunctions';
 import { MessageHandler } from '../utils/MessageHandler';
 
+import { removeRandevuSonucMessage, updateRandevuSonucMessage, confirmRandevuSonucMessage } from '../utils/ButtonFunctions';
+import { useSendMessageMutation } from '../api/api';
+
 
 const AIAsistan = () => {
   const messages = useSelector((state) => state.chat.messages);
@@ -25,6 +28,7 @@ const AIAsistan = () => {
   const messageHandler = new MessageHandler(dispatch, (msg) => dispatch(addMessage(msg)));
 
   const inputRef = useRef(null);
+
 
   const handleInputChange = (e) => {
     dispatch(setInput(e.target.value));
