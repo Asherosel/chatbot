@@ -2,6 +2,25 @@ import React from 'react'
 import RandevuAl from '../components/RandevuAl';
 import RandevuSonuc from '../components/RandevuSonuc';
 import { createComponentResponse } from '../utils/Messages';
+import { store } from '../hooks/store';
+import { localApi } from '../api/api';
+
+export const sendActionToAPI = async (actionText) => {
+    try {
+        console.log("🟡 API'ye gönderiliyor:", actionText); // GÖNDERİLİYOR MU?
+        const result = await store.dispatch(
+            localApi.endpoints.sendMessage.initiate([
+                { role: "user", content: actionText }
+            ])
+        ).unwrap();
+
+        console.log("🟢 API'den gelen cevap:", result); // GELEN CEVAP
+
+        return result;
+    } catch (e) {
+        console.error("API hatası:", e);
+    }
+};
 
 export const removeRandevuFormMessage = (setMessages, id) => {
     setMessages(prev =>
@@ -56,7 +75,7 @@ export const updateRandevuSonucMessage = (setMessages, id) => {
     });
 };
 
-export const confirmRandevuSonucMessage = (setMessages, id) => {
+export const confirmRandevuSonucMessage = async (setMessages, id) => {
     setMessages(prev =>
         prev.map(msg => {
             if (msg.id === id) {
@@ -69,13 +88,15 @@ export const confirmRandevuSonucMessage = (setMessages, id) => {
                             doctor={msg.doctor}
                             department={msg.department}
                             date={msg.date}
-                            hideButtons={true}  // Butonları gizlemek için yeni prop
+                            hideButtons={true}
                         />
                     ),
-                    content: "",  // metin kaldırılıyor, component gösterilecek
+                    content: "",
                 };
             }
             return msg;
         })
     );
+
+    await sendActionToAPI("Randevu Onayla");
 };

@@ -1,4 +1,3 @@
-import { sendAIMessage } from '../api/api';
 import { createUserMessage, createTextResponse } from './Messages';
 import { createComponentByType, getComponentTypeFromContent } from './ComponentMapper';
 
@@ -6,55 +5,58 @@ import { createComponentByType, getComponentTypeFromContent } from './ComponentM
 //await kod gerçekleşene kadar bekler.
 
 //MessageHandler sınıfı, tüm mesaj işleme mantığını bir araya getiren bir yöneticidir (controller). Özellikle mesaj gönderme, örnek mesaj tıklama, AI'den yanıt alma gibi işlevleri tek bir merkezden kontrol etmek için kullanılır.
+// MessageHandler.js
+
 export class MessageHandler {
-    constructor(setMessages, setLoading, handleMessageUpdate) {
-        this.setMessages = setMessages;  // Chat'teki mesajları güncelleyen React state fonksiyonu
-        this.setLoading = setLoading;    // Loading durumunu kontrol eden fonksiyon
-        this.handleMessageUpdate = handleMessageUpdate;  // Mesaj güncellendiğinde çalışan callback
+    constructor(setMessages, setLoading, handleMessageUpdate, generateContent) {
+        this.setMessages = setMessages;
+        this.setLoading = setLoading;
+        this.handleMessageUpdate = handleMessageUpdate;
+        this.generateContent = generateContent; // RTK mutation fonksiyonu
     }
 
     async handleExampleClick(content, setShowButtons) {
-        setShowButtons(false); //butonların gizlenmesi
-        const userMessage = createUserMessage(content); //yeni kullanıcı mesajı
-        this.setMessages(prev => [...prev, userMessage]); // Mesajı chat'e ekle
+        setShowButtons(false);
+        const userMessage = createUserMessage(content);
+        this.setMessages(prev => [...prev, userMessage]);
 
-        await this.processMessage(content); //mesajı işle
+        await this.processMessage(content); // aynı
     }
 
     async handleSendMessage(input, setInput, messages) {
-        if (!input.trim()) return; //boş mesaj kontrolü
+        if (!input.trim()) return;
 
-        const userMessage = createUserMessage(input); //kullanıcı mesajı oluştur
-        this.setMessages(prev => [...prev, userMessage]); //chat'e ekle
-        setInput(''); //inputu temizle 
-        this.setLoading(true); //loading'i başlat 
+        const userMessage = createUserMessage(input);
+        this.setMessages(prev => [...prev, userMessage]);
+        setInput('');
+        this.setLoading(true);
 
-        await this.processMessage(input, messages, userMessage); //mesajı işle
+        await this.processMessage(input, messages, userMessage);
     }
 
-    async processMessage(content, messages = [], userMessage = null) { //mesaj içeriğine göre uygun component tipini belirler ve mesajı düzenler
-        const componentType = getComponentTypeFromContent(content); //component var mı kontrol et
+    async processMessage(content, messages = [], userMessage = null) {
+        const componentType = getComponentTypeFromContent(content);
 
-        if (componentType) { //kart componenti oluşturur
+        if (componentType) {
             const result = createComponentByType(componentType, {
                 setMessages: this.setMessages,
                 onResult: this.handleMessageUpdate
-            }); // component türüne göre oluşturur.
+            });
 
-            if (result) { //eğer sonuç varsa eski mesajla yeni mesajı değiştirir ve loading'i kapatır
+            if (result) {
                 this.setMessages(prev => [...prev, result.component]);
                 this.setLoading(false);
-                return; //işlem tamamlandı, çık
+                return;
             }
         }
 
-        // AI mesajı gönder
         if (userMessage) {
             try {
-                const aiReply = await sendAIMessage([...messages, userMessage]); //AI'den cevap alır 
-                const assistantMessage = createTextResponse(aiReply); //AI mesajını oluşturur
-                this.setMessages(prev => [...prev, assistantMessage]); //chat'e yazdırır
-            } catch (error) { //hata durumundaki mesajlar
+                // RTK mutation kullanımı
+                const aiReply = await this.generateContent([...messages, userMessage]).unwrap();
+                const assistantMessage = createTextResponse(aiReply);
+                this.setMessages(prev => [...prev, assistantMessage]);
+            } catch (error) {
                 console.error('AI mesajı gönderilirken hata:', error);
                 const errorMessage = createTextResponse("Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.");
                 this.setMessages(prev => [...prev, errorMessage]);
