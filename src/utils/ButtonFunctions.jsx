@@ -1,8 +1,9 @@
+//Componentler (ör: RandevuAl, RandevuSonuc) ile ilgili özel işlemleri (onayla, sil, güncelle gibi) yönetir.API'ye istek göndermek veya mesajı güncellemek için fonksiyonlar içerir.
 import React from 'react'
 import RandevuAl from '../components/RandevuAl';
 import RandevuSonuc from '../components/RandevuSonuc';
 import { createComponentResponse } from '../utils/Messages';
-import { store } from '../hooks/store';
+import { store } from '../store/store';
 import { localApi } from '../api/api';
 
 export const sendActionToAPI = async (actionText) => {

@@ -7,15 +7,12 @@ import {
   setLoading,
   setShowButtons,
 } from '../store/ChatSlice';
-import { createUserMessage, createTextResponse } from '../utils/Messages';
 import {
   removeRandevuSonucMessage,
   updateRandevuSonucMessage,
   confirmRandevuSonucMessage,
 } from '../utils/ButtonFunctions';
 import { MessageHandler } from '../utils/MessageHandler';
-
-import { removeRandevuSonucMessage, updateRandevuSonucMessage, confirmRandevuSonucMessage } from '../utils/ButtonFunctions';
 import { useSendMessageMutation } from '../api/api';
 
 
@@ -25,10 +22,9 @@ const AIAsistan = () => {
   const loading = useSelector((state) => state.chat.loading);
   const showButtons = useSelector((state) => state.chat.showButtons);
   const dispatch = useDispatch();
-  const messageHandler = new MessageHandler(dispatch, (msg) => dispatch(addMessage(msg)));
-
+  const [sendMessageApi] = useSendMessageMutation();
+const messageHandler = new MessageHandler(dispatch, (msg) => dispatch(addMessage(msg)));
   const inputRef = useRef(null);
-
 
   const handleInputChange = (e) => {
     dispatch(setInput(e.target.value));
@@ -37,7 +33,6 @@ const AIAsistan = () => {
       inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
     }
   };
-
 const sendMessage = () => {
   messageHandler.handleSendMessage(input, (val) => dispatch(setInput(val)), messages);
   };
