@@ -1,3 +1,4 @@
+//Kullanıcıdan gelen mesajın içeriğine bakar ve hangi componentin eklenmesi gerektiğine karar verir.
 import React from 'react';
 import RandevuAl from '../components/RandevuAl';
 import SonucGoruntule from '../components/SonucGoruntule';
