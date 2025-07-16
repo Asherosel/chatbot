@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
+
 export const localApi = createApi({
     reducerPath: 'localApi',
     baseQuery: fetchBaseQuery({
@@ -14,8 +15,8 @@ export const localApi = createApi({
             query: (messages) => ({
                 url: 'chat', // http://localhost:3000/chat
                 method: 'POST',
-                headers:{
-                    "x-ai-provider":"gemini"
+                headers: {
+                    "x-ai-provider": "gemini"
                 },
                 body: {
                     message: messages[messages.length - 1].content
